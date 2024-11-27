@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Events\StartGameEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TestRequest;
 use App\Models\Test;
 use Illuminate\Support\Facades\Request;
 
@@ -16,20 +18,17 @@ class TestController extends Controller
         return $test;
     }
 
-    public function create(Request $request) {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'status' => 'nullable|boolean',
-        ]);
+    public function store(TestRequest $request) {
+        $validated = $request->validated();
 
-        return new Test($validated);
+        $test = new Test($validated);
+        $test->save();
+
+        return $test;
     }
 
-    public function update(Request $request, Test $test) {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'status' => 'nullable|boolean',
-        ]);
+    public function update(TestRequest $request, Test $test) {
+        $validated = $request->validated();
 
         $test->update($validated);
         return $test;
@@ -38,5 +37,11 @@ class TestController extends Controller
     public function delete(Test $test) {
         $test->delete();
         return response()->json(null, 204);
+    }
+
+    public function startTest(Test $test) {
+        $test->update(['active' => true]);
+        event(new StartGameEvent($test->id));
+        return $test;
     }
 }
